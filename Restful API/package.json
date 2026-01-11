@@ -12,7 +12,10 @@
   "type": "commonjs",
   "dependencies": {
     "-": "^0.0.1",
+    "@google/genai": "^1.35.0",
+    "b": "^2.0.1",
     "cors": "^2.8.5",
+    "crypt": "^0.0.2",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "g": "^2.0.1",
