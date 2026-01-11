@@ -229,5 +229,5 @@ Recipe Text: ${recipeText}
 }
 
 module.exports = {
-    ai: MODEL, generateSearchParams, generateRecipe
-}
+    ai, generateSearchParams, generateRecipe
+};

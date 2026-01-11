@@ -1,12 +1,17 @@
 // REQUIRES
 const express = require('express');
 require('dotenv').config(); //put the variables in .env file into process.env
+
+if (!process.env.TOKEN_SECRET) {
+    console.error('ERROR: TOKEN_SECRET is not set. Set TOKEN_SECRET in .env or the environment.');
+    process.exit(1);
+}
 const cors = require('cors');
 const { connect } = require("./db");
 const { ObjectId } = require('mongodb');
 const { ai, generateSearchParams, generateRecipe } = require('./gemini');
 const bcrypt = require('bcryptjs');
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 // const { verifyToken } = require("./middlewares")
 
 // SETUP EXPRESS
@@ -17,6 +22,20 @@ app.use(express.json()); // tells Express that we are sending & receiving JSON
 // SETUP DATABASE
 const mongoUri = process.env.MONGO_URI;
 const dbName = "recipe_book";
+
+function generateAccessToken(id, email) {
+    // jwt.sign creates a JWT
+    // first parameter -> object payload, or token data, the data that is in the JWT (i.e "claims")
+    // second parameter -> your secret key
+    // third parameter -> options object
+    return jwt.sign({
+        "user_id": id,
+        "email": email
+    }, process.env.TOKEN_SECRET, {
+        // m = minutes, h = hours, s = seconds, d = days, w = weeks
+        "expiresIn": "1h"
+    });
+}
 
 async function main() {
     const db = await connect(mongoUri, dbName);
@@ -278,8 +297,8 @@ async function main() {
     //Register route
     //sample request body
     //{
-    //    "email":"tanahkow@gemail.com",
-    //    "password": "rotiprata123"
+    //    "email":"rxdh@gemail.com",
+    //    "password": "rxdh123"
     //}
     app.post('/users', async function (req, res) {
         const result = await db.collection("users")
@@ -287,17 +306,24 @@ async function main() {
                 email: req.body.email,
                 password: await bcrypt.hash(req.body.password, 12)
             });
-            
+
         res.json({
             "message": "User created successfully",
             "userId": result.insertedId
         })
 
     })
+
+    // sample POST body
+    // {
+    //   "email":"rxdh@gemail.com",
+    //   "password": "rxdh123"
+    // }
+  
     // START SERVER
-    app.listen(3000, function () {
-        console.log("Server has started");
-    });
+app.listen(3000, function () {
+    console.log("Server has started");
+})
 }
 
 main();
