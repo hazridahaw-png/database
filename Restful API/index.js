@@ -12,7 +12,7 @@ const { ObjectId } = require('mongodb');
 const { ai, generateSearchParams, generateRecipe } = require('./gemini');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// const { verifyToken } = require("./middlewares")
+const { verifyToken } = require("./middlewares")
 
 // SETUP EXPRESS
 const app = express();
@@ -311,9 +311,50 @@ async function main() {
             "message": "User created successfully",
             "userId": result.insertedId
         })
+    })
+
+        app.post('/login', async function (req, res) {
+        const { email, password } = req.body;
+        const user = await db.collection("users").findOne({
+            "email": email
+        });
+
+        // compare takes in two parameters
+        // first parameter: plain text
+        // second parameter: hashed version
+        // return true if they are the same
+        if (user) {
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (isPasswordValid) {
+                // generate JWT
+                const accessToken = generateAccessToken(user._id, user.email)
+
+                // send back JWT
+                res.json({
+                    accessToken
+                })
+            } else {
+                return res.status(401).json({
+                    'error': 'Invalid login'
+                })
+            }
+        } else {
+            return res.status(401).json({
+                'error': 'Invalid login'
+            })
+        }
 
     })
 
+    //To access token will be in the request header, in the authorization field
+    //the format wil vbe the "Bearer <JWT>""
+    app.get('/protected', verifyToken, async function(req,res){
+        const tokenData = req.tokenData; // added by the verifyToken middleware
+        res.json({
+            "message":"This is a secret message",
+            tokenData
+        })
+    });
     // sample POST body
     // {
     //   "email":"rxdh@gemail.com",
